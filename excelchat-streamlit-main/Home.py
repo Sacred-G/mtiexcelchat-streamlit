@@ -24,13 +24,13 @@ matplotlib.rc_file("./.matplotlib/.matplotlibrc");
 st.set_page_config(page_title="Excel Chat", layout="wide")
 st.image("docs\images\logotag_white_col.png")
 st.text("Created by: Steven Bouldin")
-st.header("What ExcelChat can do?")
+st.header("MTI ExcelChat")
 st.text("ExcelChat is a lightweight data analysis app powered by LLM, showcasing how LLM can revolutionize the future"
         "of data analysis.")
-st.markdown("""List of todos
- - [x] Add memory
- - [x] Support non-latin text in chart
- - [ ] Sub questions support
+st.markdown("""What can I do?
+ - [x] Answer questions about data.
+ - [x] Edit the data(ex. change column from 7/19/83 to July 19th, 1983 or change a column so it shows last name first)
+ - [x] Ask me to produce charts or graphs to visualize the data.
 """)
 
 
@@ -106,12 +106,15 @@ if "llm_ready" not in st.session_state:
 
 # Description
 tab1, tab2 = st.tabs(["Workspace", "Screenshots"])
+
 with tab2:
+    st.image("docs/images/screen3.png")
+    st.image("docs/images/screen2.png")
     col1, col2 = st.columns(2)
     with col1:
-        st.image("docs/images/short1.png")
+        st.image("docs/images/short2.jpeg")
     with col2:
-        st.image("docs/images/short2.png")
+        st.image("docs/images/short3.jpeg")
 
 # DataGrid
 with st.expander("DataGrid Content") as ep:
