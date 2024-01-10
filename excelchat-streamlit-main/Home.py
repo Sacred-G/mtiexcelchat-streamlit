@@ -3,36 +3,34 @@ import logging
 import uuid
 from pathlib import Path
 from typing import Dict
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 import matplotlib
 import pandas as pd
 import streamlit as st
-
+from pandasai.config import Config  # Assuming Config is imported from the correct module
 from pandasai import SmartDataframe, Agent, Config
 from pandasai.callbacks import StdoutCallback
 from pandasai.helpers import Logger
-
-from middleware.base import CustomChartsMiddleware
 from parser.response_parser import CustomResponseParser
+from middleware.base import CustomChartsMiddleware
 from util import get_open_ai_model, get_ollama_model, get_baidu_as_model, get_prompt_template, get_baidu_qianfan_model
-
 logger = Logger()
 
 matplotlib.rc_file("./.matplotlib/.matplotlibrc");
 
 # page settings
 st.set_page_config(page_title="Excel Chat", layout="wide")
-st.image("docs\images\logotag_white_col.png")
-st.text("Created by: Steven Bouldin")
-st.header("MTI ExcelChat")
+st.header("What ExcelChat can do?")
 st.text("ExcelChat is a lightweight data analysis app powered by LLM, showcasing how LLM can revolutionize the future"
         "of data analysis.")
-st.markdown("""What can I do?
- - [x] Answer questions about data.
- - [x] Edit the data(ex. change column from 7/19/83 to July 19th, 1983 or change a column so it shows last name first)
- - [x] Ask me to produce charts or graphs to visualize the data.
+st.markdown("""List of todos
+ - [x] Add memory
+ - [x] Support non-latin text in chart
+ - [ ] Sub questions support
 """)
-
 
 class AgentWrapper:
     id: str
@@ -67,7 +65,7 @@ class AgentWrapper:
             config = Config(
                 llm=llm,
                 callback=StdoutCallback(),
-                # middlewares=[CustomChartsMiddleware()],
+                middlewares=[CustomChartsMiddleware()],
                 response_parser=CustomResponseParser,
                 custom_prompts={
                     "generate_python_code": get_prompt_template()
@@ -106,15 +104,13 @@ if "llm_ready" not in st.session_state:
 
 # Description
 tab1, tab2 = st.tabs(["Workspace", "Screenshots"])
-
 with tab2:
-    st.image("docs/images/screen3.png")
-    st.image("docs/images/screen2.png")
     col1, col2 = st.columns(2)
     with col1:
-        st.image("docs/images/short2.jpeg")
+        st.image("docs/images/short1.jpeg")
+        st.image("docs/images/short1.png")
     with col2:
-        st.image("docs/images/short3.jpeg")
+        st.image("docs/images/short2.png")
 
 # DataGrid
 with st.expander("DataGrid Content") as ep:
@@ -271,7 +267,7 @@ with st.sidebar:
         }
     </style>
     <div class="tw_share">
-        <a target="_blank" href="steven.bouldin@mtigs.com</path></svg><span>Have Questions Email Me</span></a>
+        <a target="_blank" href=<span>Created By: Steven Bouldin</span></a>
     </div>
     """, unsafe_allow_html=True)
 
@@ -292,37 +288,35 @@ if prompt is not None:
     st.session_state.chat_history.append({"role": "user", "content": prompt})
     with st.chat_message("assistant"):
         if not st.session_state.llm_ready:
-            response = "Please upload the file and configure the LLM well first"
+            response = "Please upload the file and configure the LLM first"
             st.markdown(response)
             st.session_state.chat_history.append({"role": "assistant", "content": response})
         else:
             tmp = st.markdown(f"Analyzing, hold on pls...")
+            
+        response = get_agent(st.session_state.agent_id).chat(prompt)
 
-            response = get_agent(st.session_state.agent_id).chat(prompt)
+        if isinstance(response, SmartDataframe):
+            tmp.dataframe(response.dataframe)
+            st.session_state.chat_history.append(
+                {"role": "assistant", "content": response.dataframe, "type": "dataframe"})
+        elif isinstance(response, Dict) and "type" in response and response["type"] == "plot":
+            tmp.image(f"{response['value']}")
+            st.session_state.chat_history.append(
+                {"role": "assistant", "content": response["value"], "type": "plot"}),
+   
+            st.session_state.chat_history.append({"role": "assistant", "content": response["value"], "type": "plot"})
+        else:
+            tmp.markdown(response)
+            st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-            if isinstance(response, SmartDataframe):
-                tmp.dataframe(response.dataframe)
-                st.session_state.chat_history.append(
-                    {"role": "assistant", "content": response.dataframe, "type": "dataframe"})
-            elif isinstance(response, Dict) and "type" in response and response["type"] == "plot":
-                tmp.image(f"{response['value']}")
-                st.session_state.chat_history.append(
-                    {"role": "assistant", "content": response["value"], "type": "plot"})
-            else:
-                tmp.markdown(response)
-                st.session_state.chat_history.append({"role": "assistant", "content": response})
-  
-  
-  
-    df = response.dataframe
-     
-    csv = df.to_csv(index=False)
-    edited_df = response.dataframe  # get edited DataFrame
-    tmp.dataframe(edited_df)
-    st.download_button(
-label='Download Edited Data',
-data=csv,
-file_name='edited_data.csv',
-mime='text/csv/xlsx'
-        )
-                
+        # The following lines should be indented further to align with the code block under the 'else' statement
+        if isinstance(response, Agent):
+            csv = response.to_csv(index=False)
+            st.download_button(
+            label='Download Edited Data',
+            data=csv,
+            file_name='edited_data.csv',
+            mime='text/csv/xlsx'
+            )
+               
