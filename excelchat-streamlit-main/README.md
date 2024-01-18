@@ -14,7 +14,7 @@ Here are some screenshot.
 ![Screenshot3](docs/images/screen3.png?raw=true)
 
 ## Demo
- https://excelchat.streamlit.app
+ https://mtiexcelchat.streamlit.app
 
 ## Requirements
 Python >= 3.9.
